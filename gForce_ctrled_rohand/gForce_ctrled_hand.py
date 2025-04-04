@@ -15,7 +15,7 @@ from lib_gforce import gforce
 from roh_registers_v1 import *
 
 # ROHand configuration
-COM_PORT = "COM7"
+COM_PORT = "/dev/ttyUSB0"
 NODE_ID = 2
 
 # Device filters

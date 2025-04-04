@@ -15,17 +15,18 @@ from lib_gforce.gforce import EmgRawDataConfig, SampleResolution
 from roh_registers_v1 import *
 
 # ROHand configuration
-COM_PORT = "COM8"
+COM_PORT = "/dev/ttyUSB0"
 NODE_ID = 2
 
 NUM_FINGERS = 6
 
 # Device filters
-DEV_NAME_PREFIX = "gForceBLE"
-DEV_MIN_RSSI = -64
+# DEV_NAME_PREFIX = "gForceBLE"
+DEV_NAME_PREFIX = ""
+DEV_MIN_RSSI = -128
 
 # sample resolution:BITS_8 or BITS_12
-SAMPLE_RESOLUTION = 8
+SAMPLE_RESOLUTION = 12
 
 # Channel0: thumb, Channel1: index, Channel2: middle, Channel3: ring, Channel4: pinky, Channel5: thumb root
 INDEX_CHANNELS = [7, 6, 0, 3, 4, 5]
@@ -142,12 +143,12 @@ class Application:
 
             # Control the ROHand
             resp = client.write_registers(ROH_FINGER_POS_TARGET0, finger_data, NODE_ID)
-            # print("client.write_registers() returned", resp)
+            print("client.write_registers() returned", resp)
 
-            # prev_finger_data = finger_data.copy()
-            # for i in range(len(finger_data)):
-            #     prev_finger_data[i] = finger_data[i]
-
+            prev_finger_data = finger_data.copy()
+            for i in range(len(finger_data)):
+                prev_finger_data[i] = finger_data[i]
+        print("finger data: ",prev_finger_data)
         await gforce_device.stop_streaming()
         await gforce_device.disconnect()
 
