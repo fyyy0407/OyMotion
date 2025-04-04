@@ -78,7 +78,7 @@ class Application:
 
         # Set the EMG raw data configuration, default configuration is 8 bits, 16 batch_len
         if SAMPLE_RESOLUTION == 12:
-            cfg = EmgRawDataConfig(fs=100, channel_mask=0xff, batch_len = 48, resolution = SampleResolution.BITS_12)
+            cfg = EmgRawDataConfig(fs=120, channel_mask=0xff, batch_len = 48, resolution = SampleResolution.BITS_12)
             await gforce_device.set_emg_raw_data_config(cfg)
 
         baterry_level = await gforce_device.get_battery_level()
