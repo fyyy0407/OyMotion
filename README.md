@@ -9,7 +9,7 @@ pyserial==3.5
 ```
 ## Connection
 ### Robot Hand
-everytime restart, run the following code
+everytime restart, run the following code.
 ```/dev/ttyUSB0``` is the COM_PORT of the robot hand
 ```python
 sudo chmod 777 /dev/ttyUSB0
@@ -32,4 +32,6 @@ DEV_NAME_PREFIX = ""  # filter device
 DEV_MIN_RSSI = -128  # signal strength threshold
 ```
 
-## Calib
+## Usage
+* API for Robot Hand is in ```ROHand.py```
+* API for Glove is in ```Glove.py```
