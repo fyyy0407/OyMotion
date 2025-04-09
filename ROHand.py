@@ -37,28 +37,28 @@ class ROHand:
         Return the maximum calibration value for each finger 
         '''
         clib_max = self.client.read_holding_registers(ROH_CALI_END0,self.NUM_FINGERS,self.NODE_ID)
-        return clib_max
+        return clib_max.registers
 
     def get_cali_min(self):
         '''
         Return the minimum calibration value for each finger 
         '''
         clib_min = self.client.read_holding_registers(ROH_CALI_START0,self.NUM_FINGERS,self.NODE_ID)
-        return clib_min
+        return clib_min.registers
 
     def get_status(self):
         '''
         Return the status of each finger
         '''
         status = self.client.read_holding_registers(ROH_FINGER_STATUS0,self.NUM_FINGERS,self.NODE_ID)
-        return status
+        return status.registers
 
     def get_force_limit(self):
         '''
         Return the force limit for each finger
         '''
         force_limit = self.client.read_holding_registers(ROH_FINGER_FORCE_LIMIT0,self.NUM_FINGERS,self.NODE_ID)
-        return status
+        return status.registers
     
     def set_force(self,registerID,force):
         '''
@@ -70,6 +70,14 @@ class ROHand:
         resp = self.client.write_registers(registerID,force,self.NODE_ID)
         return resp
     
+    def get_speed(self):
+        '''
+        Return the speed of each finger
+        '''
+        speed = self.client.read_holding_registers(ROH_FINGER_SPEED0,self.NUM_FINGERS,self.NODE_ID)
+        return speed.registers
+
+
     def set_speed(self,registerID,speed):
         '''
         Set the speeds for fingers
@@ -100,7 +108,7 @@ class ROHand:
         Return current position for each finger
         '''
         current_pos = self.client.read_holding_registers(ROH_FINGER_POS0,self.NUM_FINGERS,self.NODE_ID)
-        return current_pos    
+        return current_pos.registers    
         
     def set_finger_angle(self,registerID,angle):
         '''
@@ -119,7 +127,7 @@ class ROHand:
         Return current angle for each finger
         '''
         current_angle = self.client.read_holding_registers(ROH_FINGER_ANGLE0,self.NUM_FINGERS,self.NODE_ID)
-        return current_angle   
+        return current_angle.registers   
     
     def reset(self):
         '''

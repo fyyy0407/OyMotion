@@ -70,7 +70,7 @@ class Glove:
         await self.gforce_device.set_subscription(gforce.DataSubscription.EMG_RAW)
         self.q = await self.gforce_device.start_streaming()
 
-    async def calib(self,flag):     
+    async def calib(self,flag=True):     
         '''
         Calib for fingers range
         Args:
@@ -78,8 +78,9 @@ class Glove:
         '''
         
         if flag==False:
-            self.emg_min = [32,24,24,24,24,30]
-            self.emg_max = [34,52,52,52,52,40]
+            self.emg_min = [32,24,24,32,24,30]
+            self.emg_max = [34,52,52,68,52,40]
+            return
 
         input("Please spread your fingers")
         for _ in range(256):
@@ -131,7 +132,8 @@ class Glove:
         v = await self.q.get()
 
         for i in range(len(v)):
-            self.emg_data[j] = round((self.emg_data[j] + v[i][self.INDEX_CHANNELS[j]]) / 2)
-            self.finger_data[j] = round(self.interpolate(self.emg_data[j], self.emg_min[j], self.emg_max[j], 65535, 0))
-            self.finger_data[j] = self.clamp(self.finger_data[j], 0, 65535)
-    
+            for j in range(self.NUM_FINGERS):
+                self.emg_data[j] = round((self.emg_data[j] + v[i][self.INDEX_CHANNELS[j]]) / 2)
+                self.finger_data[j] = round(self.interpolate(self.emg_data[j], self.emg_min[j], self.emg_max[j], 65535, 0))
+                self.finger_data[j] = self.clamp(self.finger_data[j], 0, 65535)
+        

@@ -12,10 +12,11 @@ async def main():
     await glove_ctrl.calib(False)
     print("finish calib\n")
     client.reset()
-    
+    print("finish reset\n")
+
     while not glove_ctrl.terminated:
-        glove_ctrl.get_pos()
-        resp = client.set_finger_pos(ROH_FINGER_POS_TARGET0, glove_ctrl.finger_data,NODE_ID)
+        await glove_ctrl.get_pos()
+        resp = client.set_finger_pos(ROH_FINGER_POS_TARGET0, glove_ctrl.finger_data)
 
     await glove_ctrl.gforce_device.stop_streaming()
     await glove_ctrl.gforce_device.disconnect()
