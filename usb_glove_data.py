@@ -126,14 +126,14 @@ class OGlove:
         # 循环等待完整的数据包
         while not self.is_whole_packet:
             # time.sleep(0.001)
-
+            # print("In the loop")
             # print(f"in_waiting: {self.serial_port.in_waiting}")
 
             # 如果串口有数据可读
             while self.serial_port.in_waiting > 0:
                 # 读取串口数据
                 data_bytes = self.serial_port.read(self.serial_port.in_waiting)
-                # print("data_bytes: ", len(data_bytes))
+                print("data_bytes: ", len(data_bytes))
 
                 # 遍历读取到的数据
                 for ch in data_bytes:
@@ -145,6 +145,7 @@ class OGlove:
                     break
 
             # 如果还没有读取到完整的数据包，并且已经超时，跳出循环
+            # print("Timeout or not: ",wait_timeout < time.time())
             if (not self.is_whole_packet) and (wait_timeout < time.time()):
                 # print(f"wait time out: {wait_timeout}, now: {time.time()}")
                 # 重置解码状态
@@ -172,6 +173,7 @@ class OGlove:
 def find_comport():
     """自动查找可用串口"""
     ports = list_ports.comports()
+    import pdb;pdb.set_trace()
     for port in ports:
         if "USB" in port.description or "Serial" in port.description:
             return port.device
@@ -180,6 +182,7 @@ def find_comport():
 
 def main():
     # 配置串口参数（根据实际设备修改）
+    print("Running")
     serial_port = serial.Serial(
         port=find_comport() or "COM1",  # 自动检测或默认COM1
         baudrate=115200,
@@ -195,10 +198,11 @@ def main():
 
     try:
         glove_data = bytearray()
-
+        print(f"Initialized the glove_data {glove_data}")
         while True:
             # 读取串口数据
             if oglove.get_data(glove_data):
+                print(f"oglove get the data successfully")
                 finger_data = []
                 # print("Received data:", glove_data.hex(" ", 1))
 

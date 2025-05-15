@@ -1,7 +1,7 @@
 import time
 import serial
 from serial.tools import list_ports
-
+import asyncio
 
 # Constants
 
@@ -39,6 +39,11 @@ class OGlove:
         self.packet_data = bytearray(MAX_PROTOCOL_DATA_SIZE + 2)  # Including byte_cnt, data[], lrc
         self.send_buf = bytearray(MAX_PROTOCOL_DATA_SIZE + 4)  # Including header0, header1, nb_data, lrc
         self.byte_count = 0
+        self.emg_min=[0 for _ in range(6)]
+        self.emg_max=[0 for _ in range(6)]
+        self.finger_data=[0 for _ in range(6)]
+        self.NUM_FINGERS=5
+        self.terminated = False
 
     def calc_lrc(ctx, lrcBytes, lrcByteCount):
         """
@@ -167,18 +172,190 @@ class OGlove:
 
         self.is_whole_packet = False
         return True
-
-
+    
+    @staticmethod
+    def clamp(n, smallest, largest):
+        return max(smallest, min(n, largest))
+    
+    @staticmethod
+    def _signal_handler(self):
+        print("You pressed ctrl-c, exit")
+        self.terminated = True
+        
+    @staticmethod
+    def interpolate(n, from_min, from_max, to_min, to_max):
+        return (n - from_min) / (from_max - from_min) * (to_max - to_min) + to_min
+    
+    async def get_pos(self):
+        glove_data = bytearray()
+        
+        if self.get_data(glove_data):
+            finger_data = []
+            for i in range(int(len(glove_data) / 2)):
+                finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+            for j in range(self.NUM_FINGERS+1):
+                deadzone=3500 if j in [1,2,3,4] else 7000
+                raw_value=round(self.interpolate(finger_data[j], self.emg_min[j], self.emg_max[j], 65535, 0))
+                if abs(raw_value-self.finger_data[j]) < deadzone:
+                    continue
+                else:
+                    self.finger_data[j] = self.clamp(raw_value, 0, 65535)
+            print(self.finger_data)    
+        
+    async def calib(self,flag=True):    
+        if not flag:
+            self.emg_max=[1009, 414, 1066, 1272, 1140, 684]
+            self.emg_min=[605, 266, 692, 583, 596, 466]
+            return
+        input("thumb max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[0]=round((self.emg_max[0]+finger_data[0])/2)
+        print(self.emg_max, finger_data)
+        input("thumb min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[0]=round((self.emg_min[0]+finger_data[0])/2)
+        print(self.emg_min, finger_data)
+        input("second finger max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[1]=round((self.emg_max[1]+finger_data[1])/2)
+        print(self.emg_max, finger_data)
+        input("second finger min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[1]=round((self.emg_min[1]+finger_data[1])/2)
+        print(self.emg_min, finger_data)
+        input("third finger max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[2]=round((self.emg_max[2]+finger_data[2])/2)
+        print(self.emg_max, finger_data)
+        input("third finger min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[2]=round((self.emg_min[2]+finger_data[2])/2)
+        print(self.emg_min, finger_data)
+        input("fourth finger max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[3]=round((self.emg_max[3]+finger_data[3])/2)
+        print(self.emg_max, finger_data)
+        input("fourth finger min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[3]=round((self.emg_min[3]+finger_data[3])/2)
+        print(self.emg_min, finger_data)
+        input("fifth finger max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[4]=round((self.emg_max[4]+finger_data[4])/2)
+        print(self.emg_max, finger_data)
+        input("fifth finger min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[4]=round((self.emg_min[4]+finger_data[4])/2)
+        print(self.emg_min, finger_data)
+        input("thumb rotation max")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_max[5]=round((self.emg_max[5]+finger_data[5])/2)
+        print(self.emg_max, finger_data)
+        input("thumb rotation min")
+        for _ in range(256):
+            glove_data = bytearray()
+            if self.get_data(glove_data):
+                finger_data = []
+                for i in range(int(len(glove_data) / 2)):
+                    finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+                self.emg_min[5]=round((self.emg_min[5]+finger_data[5])/2)
+        print(self.emg_min, finger_data)
+        # for _ in range(256):
+        #     glove_data = bytearray()
+        #     if self.get_data(glove_data):
+        #         finger_data = []
+        #         for i in range(int(len(glove_data) / 2)):
+        #             finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+        #         for i in range(self.NUM_FINGERS+1): # this gives the largest value for thumb rotation
+        #             self.emg_max[i]=round((self.emg_max[i]+finger_data[i])/2)
+        # print(self.emg_max, finger_data)
+        # input("Please make a fist")
+        # for _ in range(256):
+        #     glove_data = bytearray()
+        #     if self.get_data(glove_data):
+        #         finger_data = []
+        #         for i in range(int(len(glove_data) / 2)):
+        #             finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+        #         for i in range(self.NUM_FINGERS):
+        #             self.emg_min[i]=round((self.emg_min[i]+finger_data[i])/2)
+        # print(self.emg_min, finger_data)
+        # input("Please rotate your thumb root to maximum angle")
+        # for _ in range(256):
+        #     glove_data = bytearray()
+        #     if self.get_data(glove_data):
+        #         finger_data = []
+        #         for i in range(int(len(glove_data) / 2)):
+        #             finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
+        #         self.emg_min[5]=round((self.emg_min[5]+finger_data[5])/2)
+        print(self.emg_min,self.emg_max)
+        import pdb;pdb.set_trace()
+        print(self.emg_min,self.emg_max)
 def find_comport():
     """自动查找可用串口"""
     ports = list_ports.comports()
     for port in ports:
-        if "ttyUSB" in port.device or "ttyACM" in port.device:
+        # if "ttyUSB" in port.device or "ttyACM" in port.device:
+        if "ttyACM" in port.device:
             return port.device
     return None
 
 
-def main():
+async def main():
     # 配置串口参数（根据实际设备修改）
     serial_port = serial.Serial(
         port=find_comport(),  # 自动检测或默认COM1
@@ -190,12 +367,11 @@ def main():
     )
 
     print(f"Using serial port: {serial_port.name}")
-
     oglove = OGlove(serial=serial_port, timeout=2000)
-
+    await oglove.calib()
+    exit(0)
     try:
         glove_data = bytearray()
-
         while True:
             # 读取串口数据
             if oglove.get_data(glove_data):
@@ -209,7 +385,6 @@ def main():
 
                 print("大拇指弯曲:{0:5},  食指弯曲:{1:5},  中指弯曲:{2:5},  无名指弯曲:{3:5},  小拇指弯曲:{4:5},  大拇指旋转:{5:5}"
                     .format(finger_data[0], finger_data[1], finger_data[2], finger_data[3], finger_data[4], finger_data[5]))
-
     except KeyboardInterrupt:
         print("用户终止程序")
     finally:
@@ -218,4 +393,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
