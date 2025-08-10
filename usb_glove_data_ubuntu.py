@@ -194,18 +194,29 @@ class OGlove:
             for i in range(int(len(glove_data) / 2)):
                 finger_data.append((glove_data[i * 2]) | (glove_data[i * 2 + 1] << 8))
             for j in range(self.NUM_FINGERS+1):
-                deadzone=3500 if j in [1,2,3,4] else 7000
+                # if j in []
+                deadzone=0
+                if j in [3,4]:
+                    deadzone=57000
+                elif j in [1,2]:
+                    deadzone = 3500
+                else:
+                    deadzone = 13000
+                # deadzone=3500 if j in [1,2,3,4] else 7000
                 raw_value=round(self.interpolate(finger_data[j], self.emg_min[j], self.emg_max[j], 65535, 0))
+                if j==5:
+                    raw_value = 65536 - raw_value
+                    # print(raw_value,self.finger_data[j])
                 if abs(raw_value-self.finger_data[j]) < deadzone:
                     continue
                 else:
                     self.finger_data[j] = self.clamp(raw_value, 0, 65535)
-            print(self.finger_data)    
+            # print(self.finger_data)    
         
     async def calib(self,flag=True):    
         if not flag:
-            self.emg_max=[1009, 414, 1066, 1272, 1140, 684]
-            self.emg_min=[605, 266, 692, 583, 596, 466]
+            self.emg_max=[681, 300, 730, 1094, 920, 1156]
+            self.emg_min=[429, 249, 506, 514, 469, 1042]
             return
         input("thumb max")
         for _ in range(256):

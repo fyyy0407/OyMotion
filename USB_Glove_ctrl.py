@@ -18,7 +18,7 @@ async def main():
 
     print(f"Using serial port: {serial_port.name}")
     glove_ctrl = OGlove(serial=serial_port, timeout=2000)
-    await glove_ctrl.calib(flag=False)
+    await glove_ctrl.calib(flag=True)
     
     # import pdb;pdb.set_trace()
     # exit(0)

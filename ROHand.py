@@ -4,14 +4,16 @@ import signal
 import sys
 import time
 import math
-
+import threading
 from pymodbus import FramerType
+
 from pymodbus.client import ModbusSerialClient
+from multiprocessing import shared_memory
+from .lib_gforce import gforce
+import numpy as np
+from .lib_gforce.gforce import EmgRawDataConfig, SampleResolution
 
-from lib_gforce import gforce
-from lib_gforce.gforce import EmgRawDataConfig, SampleResolution
-
-from roh_registers_v1 import *
+from .roh_registers_v1 import *
 
 class ROHand:
     """
@@ -20,11 +22,49 @@ class ROHand:
     Args:
     COM_PORT,NODE_ID,NUM_FINGERS: ROHand Configuration
     """
-    def __init__(self,COM_PORT="/dev/ttyUSB0",NODE_ID=2,NUM_FINGERS=6):
+    def __init__(self,COM_PORT="/dev/ttyUSB0",NODE_ID=2,NUM_FINGERS=6,shm_name=None):
         super(ROHand,self).__init__()
         self.NODE_ID = NODE_ID
         self.NUM_FINGERS = NUM_FINGERS
-        self.client = ModbusSerialClient(COM_PORT,FramerType.RTU,115200)
+        # self.client = ModbusSerialClient(COM_PORT,FramerType.RTU,115200)
+        self.client = ModbusSerialClient( port=COM_PORT, baudrate=115200)
+
+        self._shm_thread = None
+        self._shm_thread_running = False
+        self.shm = None
+        if shm_name:
+            N = 6
+            self.shm = shared_memory.SharedMemory(
+                name=shm_name,
+                create=True,
+                size=N * np.dtype(np.uint16).itemsize
+            )
+            # buf 视图
+            self.buf = np.ndarray((N,), dtype=np.uint16, buffer=self.shm.buf)
+            
+    def _shared_memory_loop(self, interval=0.05):
+        while self._shm_thread_running:
+            if self.shm:
+                handpose = self.get_current_pos()
+                self.buf[:] = np.array(handpose,dtype=np.uint16)
+            time.sleep(interval)
+    
+    def start_shared_memory_loop(self, interval=0.05):
+        if not self.shm:
+            print("No shared memory configured.")
+            return
+        if self._shm_thread is None:
+            self._shm_thread_running = True
+            self._shm_thread = threading.Thread(target=self._shared_memory_loop, args=(interval,), daemon=True)
+            self._shm_thread.start()
+
+    def stop_shared_memory_loop(self):
+        self._shm_thread_running = False
+        if self._shm_thread:
+            self._shm_thread.join()
+            self._shm_thread = None
+    def stop(self):
+        self.stop_shared_memory_loop()
 
     def connect(self):
         self.client.connect()
@@ -58,7 +98,7 @@ class ROHand:
         Return the force limit for each finger
         '''
         force_limit = self.client.read_holding_registers(ROH_FINGER_FORCE_LIMIT0,self.NUM_FINGERS,self.NODE_ID)
-        return status.registers
+        return force_limit.registers
     
     def set_force(self,registerID,force):
         '''
