@@ -215,8 +215,8 @@ class OGlove:
         
     async def calib(self,flag=True):    
         if not flag:
-            self.emg_max=[681, 300, 730, 1094, 920, 1156]
-            self.emg_min=[429, 249, 506, 514, 469, 1042]
+            self.emg_max=[1054, 366, 736, 870, 820, 1159]
+            self.emg_min=[430, 248, 534, 554, 448, 1006]
             return
         input("thumb max")
         for _ in range(256):

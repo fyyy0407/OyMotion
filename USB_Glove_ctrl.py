@@ -3,7 +3,7 @@ from ROHand import *
 
 async def main():
     NODE_ID=2
-    COM_PORT="/dev/ttyUSB3"
+    COM_PORT="/dev/ttyUSB0"
     client = ROHand(COM_PORT,NODE_ID)
     client.connect()
     # glove_ctrl = OGlove()
@@ -18,7 +18,7 @@ async def main():
 
     print(f"Using serial port: {serial_port.name}")
     glove_ctrl = OGlove(serial=serial_port, timeout=2000)
-    await glove_ctrl.calib(flag=True)
+    await glove_ctrl.calib(flag=False)
     
     # import pdb;pdb.set_trace()
     # exit(0)
